@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #000;
+      font-family: 'Prompt', sans-serif;
+    }
+    
+    canvas {
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1024" height="576"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // โหลดภาพ
+    const images = {
+      background: new Image(),
+      level1: new Image(),
+      level2: new Image(),
+      back: new Image()
+    };
+
+    images.background.src = './pok_game.png';
+    images.level1.src = './LEVEL_1.png';
+    images.level2.src = './LEVEL_2.png';
+    images.back.src = './BACK.png';
+
+    // ตำแหน่งและขนาดปุ่ม (300px × 150px)
+    const buttons = {
+      level1: { 
+        x: 62,  // (1024 - 300×2 - 20) / 2
+        y: 280, 
+        width: 300, 
+        height: 150 
+      },
+      level2: { 
+        x: 362, // 62 + 300 + 0
+        y: 280, 
+        width: 300, 
+        height: 150 
+      },
+        back: { 
+        x: 362, // กึ่งกลาง (1024-300)/2
+        y: 400, 
+        width: 300, 
+        height: 150 
+      }
+    };
+
+    let loadedImages = 0;
+    const totalImages = Object.keys(images).length;
+
+    // ตรวจสอบการโหลดภาพ
+    function checkAllImagesLoaded() {
+      loadedImages++;
+      if (loadedImages === totalImages) {
+        draw();
+      }
+    }
+
+    Object.values(images).forEach(img => {
+      img.onload = checkAllImagesLoaded;
+      img.onerror = () => console.error('Failed to load image:', img.src);
+    });
+
+    // วาดทั้งหมด
+    function draw() {
+      // ล้าง Canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // วาดพื้นหลัง
+      ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
+      
+      // วาดปุ่ม LEVEL 1
+      if (images.level1.complete) {
+        ctx.drawImage(
+          images.level1, 
+          buttons.level1.x, 
+          buttons.level1.y, 
+          buttons.level1.width, 
+          buttons.level1.height
+        );
+      }
+      
+      // วาดปุ่ม LEVEL 2
+      if (images.level2.complete) {
+        ctx.drawImage(
+          images.level2, 
+          buttons.level2.x, 
+          buttons.level2.y, 
+          buttons.level2.width, 
+          buttons.level2.height
+        );
+      }
+          
+      // วาดปุ่ม BACK
+      if (images.back.complete) {
+        ctx.drawImage(
+          images.back, 
+          buttons.back.x, 
+          buttons.back.y, 
+          buttons.back.width, 
+          buttons.back.height
+        );
+      }
+    }
+
+    // ตรวจสอบการคลิกเมาส์
+    canvas.addEventListener('click', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const mouseX = (event.clientX - rect.left) * scaleX;
+      const mouseY = (event.clientY - rect.top) * scaleY;
+      
+      // ตรวจสอบคลิกปุ่ม
+      if (isPointInRect(mouseX, mouseY, buttons.level1)) {
+        goLevel(1);
+      } else if (isPointInRect(mouseX, mouseY, buttons.level2)) {
+        goLevel(2);
+      } else if (isPointInRect(mouseX, mouseY, buttons.back)) {
+        goBack();
+      }
+    });
+
+    // ฟังก์ชันตรวจสอบจุดในสี่เหลี่ยม
+    function isPointInRect(x, y, rect) {
+      return x >= rect.x && x <= rect.x + rect.width &&
+             y >= rect.y && y <= rect.y + rect.height;
+    }
+
+    // เอฟเฟกต์เมื่อเมาส์ hover
+    canvas.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const mouseX = (event.clientX - rect.left) * scaleX;
+      const mouseY = (event.clientY - rect.top) * scaleY;
+      
+      // เปลี่ยน cursor เมื่อ hover ปุ่ม
+      let isHovering = false;
+      
+      if (isPointInRect(mouseX, mouseY, buttons.level1) ||
+          isPointInRect(mouseX, mouseY, buttons.level2) ||
+          isPointInRect(mouseX, mouseY, buttons.level3) ||
+          isPointInRect(mouseX, mouseY, buttons.back)) {
+        canvas.style.cursor = 'pointer';
+        isHovering = true;
+      } else {
+        canvas.style.cursor = 'default';
+      }
+      
+      // วาดใหม่เพื่อแสดงเอฟเฟกต์ hover
+      if (loadedImages === totalImages) {
+        draw();
+        
+        // วาดกรอบเมื่อ hover
+        if (isHovering) {
+          ctx.strokeStyle = 'rgba(255, 255, 0, 0.8)';
+          ctx.lineWidth = 4;
+          ctx.setLineDash([]);
+          
+          if (isPointInRect(mouseX, mouseY, buttons.level1)) {
+            ctx.strokeRect(buttons.level1.x, buttons.level1.y, buttons.level1.width, buttons.level1.height);
+          } else if (isPointInRect(mouseX, mouseY, buttons.level2)) {
+            ctx.strokeRect(buttons.level2.x, buttons.level2.y, buttons.level2.width, buttons.level2.height);
+          } 
+        }
+      }
+    });
+
+    // ฟังก์ชันเปลี่ยนหน้า
+    function goLevel(level) {
+      if (level === 1) window.location.href = './teacher/sunnyland-platformer-main/index.html';
+      if (level === 2) window.location.href = './cham/index.html';
+      
+    }
+
+    function goBack() {
+      window.location.href = './mainmenu.html';
+    }
+
+    // วาดใหม่เมื่อ resize window
+    window.addEventListener('resize', () => {
+      if (loadedImages === totalImages) {
+        draw();
+      }
+    });
+
+    // วาด initial
+    draw();
+  </script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Game Menu</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #000;
+      font-family: 'Prompt', sans-serif;
+    }
+    
+    canvas {
+      border: 1px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="1024" height="576"></canvas>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // โหลดภาพ
+    const images = {
+      background: new Image(),
+      startButton: new Image(),
+      levelSelectButton: new Image()
+    };
+
+    images.background.src = './pok_game.png';
+    images.startButton.src = './START.png';
+    images.levelSelectButton.src = './LS.png';
+
+    // ตำแหน่งและขนาดปุ่ม
+    const buttons = {
+      start: {
+        x: 352 , // กึ่งกลาง (1024/2 - 60/2)
+        y: 280,
+        width: 300,
+        height: 150
+      },
+      levelSelect: {
+        x: 352 , // กึ่งกลาง (1024/2 - 70/2)
+        y: 420,
+        width: 300,
+        height: 150
+      }
+    };
+
+    let loadedImages = 0;
+    const totalImages = Object.keys(images).length;
+
+    // ตรวจสอบการโหลดภาพ
+    function checkAllImagesLoaded() {
+      loadedImages++;
+      if (loadedImages === totalImages) {
+        draw();
+      }
+    }
+
+    Object.values(images).forEach(img => {
+      img.onload = checkAllImagesLoaded;
+      img.onerror = () => console.error('Failed to load image:', img.src);
+    });
+
+    // วาดทั้งหมด
+    function draw() {
+      // ล้าง Canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // วาดพื้นหลัง
+      ctx.drawImage(images.background, 0, 0, canvas.width, canvas.height);
+      
+      // วาดข้อความ title
+      ctx.font = 'bold 48px Prompt';
+      ctx.fillStyle = 'white';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'black';
+      ctx.shadowBlur = 5;
+      ctx.shadowBlur = 0;
+      
+      // วาดปุ่ม Start
+      ctx.drawImage(
+        images.startButton, 
+        buttons.start.x, 
+        buttons.start.y, 
+        buttons.start.width, 
+        buttons.start.height
+      );
+      
+      // วาดปุ่ม Level Select
+      ctx.drawImage(
+        images.levelSelectButton, 
+        buttons.levelSelect.x, 
+        buttons.levelSelect.y, 
+        buttons.levelSelect.width, 
+        buttons.levelSelect.height
+      );
+    }
+
+    // ตรวจสอบการคลิกเมาส์
+    canvas.addEventListener('click', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const mouseX = (event.clientX - rect.left) * scaleX;
+      const mouseY = (event.clientY - rect.top) * scaleY;
+      
+      // ตรวจสอบคลิกปุ่ม Start
+      if (
+        mouseX >= buttons.start.x &&
+        mouseX <= buttons.start.x + buttons.start.width &&
+        mouseY >= buttons.start.y &&
+        mouseY <= buttons.start.y + buttons.start.height
+      ) {
+        startGame();
+      }
+      
+      // ตรวจสอบคลิกปุ่ม Level Select
+      if (
+        mouseX >= buttons.levelSelect.x &&
+        mouseX <= buttons.levelSelect.x + buttons.levelSelect.width &&
+        mouseY >= buttons.levelSelect.y &&
+        mouseY <= buttons.levelSelect.y + buttons.levelSelect.height
+      ) {
+        selectLevel();
+      }
+    });
+
+    // เอฟเฟกต์เมื่อเมาส์ hover
+    canvas.addEventListener('mousemove', (event) => {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      
+      const mouseX = (event.clientX - rect.left) * scaleX;
+      const mouseY = (event.clientY - rect.top) * scaleY;
+      
+      // เปลี่ยน cursor เมื่อ hover ปุ่ม
+      let isHovering = false;
+      
+      if (
+        (mouseX >= buttons.start.x && mouseX <= buttons.start.x + buttons.start.width &&
+         mouseY >= buttons.start.y && mouseY <= buttons.start.y + buttons.start.height) ||
+        (mouseX >= buttons.levelSelect.x && mouseX <= buttons.levelSelect.x + buttons.levelSelect.width &&
+         mouseY >= buttons.levelSelect.y && mouseY <= buttons.levelSelect.y + buttons.levelSelect.height)
+      ) {
+        canvas.style.cursor = 'pointer';
+        isHovering = true;
+      } else {
+        canvas.style.cursor = 'default';
+      }
+      
+      // วาดใหม่เพื่อแสดงเอฟเฟกต์ hover
+      if (loadedImages === totalImages) {
+        draw();
+        
+        // วาดกรอบเมื่อ hover
+        if (isHovering) {
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+          ctx.lineWidth = 2;
+          
+          if (mouseX >= buttons.start.x && mouseX <= buttons.start.x + buttons.start.width &&
+              mouseY >= buttons.start.y && mouseY <= buttons.start.y + buttons.start.height) {
+            ctx.strokeRect(buttons.start.x, buttons.start.y, buttons.start.width, buttons.start.height);
+          }
+          
+          if (mouseX >= buttons.levelSelect.x && mouseX <= buttons.levelSelect.x + buttons.levelSelect.width &&
+              mouseY >= buttons.levelSelect.y && mouseY <= buttons.levelSelect.y + buttons.levelSelect.height) {
+            ctx.strokeRect(buttons.levelSelect.x, buttons.levelSelect.y, buttons.levelSelect.width, buttons.levelSelect.height);
+          }
+        }
+      }
+    });
+
+    // ฟังก์ชันเปลี่ยนหน้า
+    function startGame() {
+      window.location.href = './teacher/sunnyland-platformer-main/index.html';
+    }
+
+    function selectLevel() {
+      window.location.href = './levelselect.html';
+    }
+
+    // วาดใหม่เมื่อ resize window
+    window.addEventListener('resize', () => {
+      if (loadedImages === totalImages) {
+        draw();
+      }
+    });
+  </script>
+</body>
+</html>
